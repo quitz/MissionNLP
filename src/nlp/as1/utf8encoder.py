@@ -1,3 +1,5 @@
+#Encodes UTF-16 to UTF-8
+
 import sys
 import array
 
@@ -59,12 +61,7 @@ def toUTF8(ipChar):
         
     utf8Arr.reverse()
     return utf8Arr
-
-print bin(225)
-print bin(132)
-print bin(134)
-    
- 
+#Take input file path
 ipFile = sys.argv[1]
 newFileBytes = []    
     

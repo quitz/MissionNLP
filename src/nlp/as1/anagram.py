@@ -1,3 +1,4 @@
+#Prints all permutations of a string
 import sys
 
 res = []
@@ -9,7 +10,7 @@ def perm(start, remain):
         perm(start + remain[i], ''.join(remain[:i] + remain[i + 1:]))
          
 
-
+#Take input word
 ipWord = sys.argv[1]
 print "Input - {0}\n".format(ipWord) 
 
