@@ -33,7 +33,7 @@ tag_counts = Counter()
 
 def calculate_transition_prob(tag_word, prev_tag):
     '''
-    calculate transition probability prev_tag, tag_word
+    calculate transition probability tag_word, prev_tag
     transition count from prev_tag to tag_word
     total possible transition count
     '''
@@ -69,7 +69,8 @@ def main_fn():
         tag_counts = eval(f.readline())
 
         f.close();
-        
+    
+    
     with open(test_data, 'r') as f:
         line = f.readline()
 #         print line#.decode('string_escape')
@@ -118,7 +119,7 @@ def main_fn():
                             # count total freq of tag ->  tag_counts[tag_word]
                             em_prob_word_tag = counter_tags_per_word[tag_word] / tag_counts[tag_word]
                             
-                            total_prob_word_tag = tran_prob_prev_to_current + em_prob_word_tag
+                            total_prob_word_tag = tran_prob_prev_to_current * em_prob_word_tag
                             
                             # update max probability
                             _,max_probabilty = chain[tag_word, position]
@@ -152,6 +153,7 @@ def main_fn():
                 # loop for single word in a line ends
 
             # find best tag for last position
+#             print chain
             last_word_tag = ""
             last_word_tag_probability = NEG_INF
             for tag in tag_counts:
