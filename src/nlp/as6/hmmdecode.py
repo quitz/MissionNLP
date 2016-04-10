@@ -53,6 +53,11 @@ def calculate_transition_prob_smoothed(prev_tag):
 def join_probability(prev_tag_probability, total_prob_word_tag):
     return log10(total_prob_word_tag) + prev_tag_probability
 
+
+def calculate_emission_prob(counter_tags_per_word, tag_word):
+    global words_to_tag_counts, tag_to_next_tag_count, tag_counts
+    return counter_tags_per_word[tag_word] / tag_counts[tag_word]
+
 def main_fn():
     global words_to_tag_counts, tag_to_next_tag_count, tag_counts
     # Take input dir
@@ -117,7 +122,7 @@ def main_fn():
                             # calculate emission probability word, tag_word
                             # count freq of tag | word -> counter_tags_per_word[tag_word] 
                             # count total freq of tag ->  tag_counts[tag_word]
-                            em_prob_word_tag = counter_tags_per_word[tag_word] / tag_counts[tag_word]
+                            em_prob_word_tag = calculate_emission_prob(counter_tags_per_word, tag_word)
                             
                             total_prob_word_tag = tran_prob_prev_to_current * em_prob_word_tag
                             
@@ -137,9 +142,13 @@ def main_fn():
                             # TODO test using this block only if transition_exists = False
 #                             print position,"No transition from {0} {1} ".format(prev_tag, tag_word)
                             tran_prob_prev_to_current = calculate_transition_prob_smoothed(prev_tag)
+                            em_prob_word_tag = calculate_emission_prob(counter_tags_per_word, tag_word)
+                            
+                            total_prob_word_tag = tran_prob_prev_to_current * em_prob_word_tag
+                            
                             _,max_probabilty = chain[tag_word, position]
-                            if join_probability( prev_tag_probability, tran_prob_prev_to_current) > max_probabilty:
-                                chain[tag_word, position] = prev_tag, join_probability( prev_tag_probability, tran_prob_prev_to_current)
+                            if join_probability( prev_tag_probability, total_prob_word_tag) > max_probabilty:
+                                chain[tag_word, position] = prev_tag, join_probability( prev_tag_probability, total_prob_word_tag)
 #                                 print "set ",tag_word, position , chain[tag_word, position]
 
                     # loop for each tag of a word ends
@@ -176,8 +185,7 @@ def main_fn():
             
 #             print tagged_words
             with open("hmmoutput.txt", 'a') as o:
-                for tagged_word in tagged_words:
-                    o.write("{0} ".format(tagged_word))
+                o.write(" ".join(tagged_words))
                 o.write("\n")
                 o.close()
 
