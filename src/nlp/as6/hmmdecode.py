@@ -92,6 +92,7 @@ def main_fn():
             prev_tag_set = [START_STATE]
             position = -1
             for word in words:
+                chain_temp = {}
                 position += 1
                 transition_exists = False
                 
@@ -103,14 +104,14 @@ def main_fn():
 #                     print "Can't find this word in training data", position, word
                     # considering all tags as we don't know anything about this word 
                     counter_tags_per_word = Counter(tag_counts.keys())
-
                 
                 for tag_word in counter_tags_per_word:
                     
                     chain[tag_word,position] = None, NEG_INF
-                                
+                    chain_temp[tag_word,position] = None, NEG_INF            
                     # all transition from  prev_tag to tag_word
                     for prev_tag in prev_tag_set :
+#                         print "Found", tag_word, position
                         prev_tag_probability = 0
                         if (position > 0) :
                             _,prev_tag_probability = chain[prev_tag, position - 1 ]
@@ -143,18 +144,20 @@ def main_fn():
 #                             print position,"No transition from {0} {1} ".format(prev_tag, tag_word)
                             tran_prob_prev_to_current = calculate_transition_prob_smoothed(prev_tag)
                             em_prob_word_tag = calculate_emission_prob(counter_tags_per_word, tag_word)
-                            
                             total_prob_word_tag = tran_prob_prev_to_current * em_prob_word_tag
-                            
-                            _,max_probabilty = chain[tag_word, position]
+#                             print "Not found", tag_word, position
+                            _,max_probabilty = chain_temp[tag_word, position]
                             if join_probability( prev_tag_probability, total_prob_word_tag) > max_probabilty:
-                                chain[tag_word, position] = prev_tag, join_probability( prev_tag_probability, total_prob_word_tag)
+                                chain_temp[tag_word, position] = prev_tag, join_probability( prev_tag_probability, total_prob_word_tag)
 #                                 print "set ",tag_word, position , chain[tag_word, position]
 
                     # loop for each tag of a word ends
-#                 if not transition_exists:
-#                     # TODO check how to handle unknown transition
+                if not transition_exists:
+                    # TODO check how to handle unknown transition
 #                     print "Can't find existing transitions for {0} , prev_tag - {1} provided tags - {2}".format(word, prev_tag_set, counter_tags_per_word)
+#                     print chain_temp
+                    chain.update(chain_temp)
+                    chain_temp = {}
                     
                 # update prev_tag
                 prev_tag_set = counter_tags_per_word.keys()
