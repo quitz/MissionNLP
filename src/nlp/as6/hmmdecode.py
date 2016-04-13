@@ -95,10 +95,12 @@ def main_fn():
                 chain_temp = {}
                 position += 1
                 transition_exists = False
+                word_exists = False
                 
                 # all the tag_to_next_tag_count for this word
                 if word in words_to_tag_counts:
                     counter_tags_per_word = words_to_tag_counts[word]
+                    word_exists = True
                 else:
                     # TODO check how to handle unknown word 
 #                     print "Can't find this word in training data", position, word
@@ -123,7 +125,10 @@ def main_fn():
                             # calculate emission probability word, tag_word
                             # count freq of tag | word -> counter_tags_per_word[tag_word] 
                             # count total freq of tag ->  tag_counts[tag_word]
-                            em_prob_word_tag = calculate_emission_prob(counter_tags_per_word, tag_word)
+                            if word_exists:
+                                em_prob_word_tag = calculate_emission_prob(counter_tags_per_word, tag_word)
+                            else:
+                                em_prob_word_tag = 1
                             
                             total_prob_word_tag = tran_prob_prev_to_current * em_prob_word_tag
                             
@@ -143,7 +148,11 @@ def main_fn():
                             # TODO test using this block only if transition_exists = False
 #                             print position,"No transition from {0} {1} ".format(prev_tag, tag_word)
                             tran_prob_prev_to_current = calculate_transition_prob_smoothed(prev_tag)
-                            em_prob_word_tag = calculate_emission_prob(counter_tags_per_word, tag_word)
+                            if word_exists:
+                                em_prob_word_tag = calculate_emission_prob(counter_tags_per_word, tag_word)
+                            else:
+                                em_prob_word_tag = 1
+                                
                             total_prob_word_tag = tran_prob_prev_to_current * em_prob_word_tag
 #                             print "Not found", tag_word, position
                             _,max_probabilty = chain_temp[tag_word, position]
