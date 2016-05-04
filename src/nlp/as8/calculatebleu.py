@@ -3,9 +3,8 @@ from collections import Counter
 import sys
 from itertools import izip
 import math
-
-# [685, 331, 194, 116] [1225, 1175, 1125, 1075]
-
+import os
+from dircache import listdir
 
 def ngrams(input_line, n):
     input_line = input_line.split()
@@ -35,26 +34,27 @@ def calc_pn_value(candidate_line, reference_lines, gramCount):
 #     print max_ref_counts
     count_clipped = [min(count, max_ref_counts[word]) for word, count in candidate_ctr.items()]
 #     print count_clipped
-
+#     print sum(candidate_ctr.values())
+#     print candidate_line
     return sum(count_clipped) , sum(candidate_ctr.values())
 
-def calc_bp(candidate_line, reference_lines):
-
-    c = len(candidate_line)
-#     print c
-    r = [len(reference_line) for reference_line in reference_lines]
-
-    min_r = [abs(r_i - c) for r_i in r]
-    r = r[min_r.index(min(min_r))]
-#     print r
+def calc_cr_bp(candidate_line, reference_lines):
     
+    c = len(candidate_line)
+
+    r = [len(reference_line) for reference_line in reference_lines]
+    
+    delta_r = [abs(r_i - c) for r_i in r]
+    r = r[delta_r.index(min(delta_r))]
+#     print  c,[len(reference_line) for reference_line in reference_lines],r
+    return c,r
+    
+def calc_bp(c,r):
     # as per paper
     if c > r:
         return 1
     else:
         return math.exp(1 - r / c)
-
-
 
 def strip_line(line):
     return line.strip("\n").strip()
@@ -64,27 +64,53 @@ def main_fn():
     candidate_data = sys.argv[1]
     ref_data = sys.argv[2]
     
+    ref_files = [0]
+    if os.path.isfile(ref_data):
+        ref_files[0] = open(ref_data,"r")
+    else:
+        if ref_data[-1:] !="/":
+            ref_data+="/"
+              
+        ref_files = [0]*len(listdir(ref_data))
+        for idx,fn in enumerate(listdir(ref_data)):
+            ref_files[idx] = open(ref_data + fn, 'r')
+            
     # if ref_data is file
     num = [0,0,0,0]
     denom = [0,0,0,0]
-    bp = 0
     tot_x = [] 
-    tot_y = [] 
-    with open(candidate_data) as cand_file, open(ref_data) as ref_file: 
-        for x, y in izip(cand_file, ref_file):
-            #calculate Pn
+    tot_y = [[]] * len(ref_files)
+    tot_c = 0
+    tot_r = 0
+    
+    with open(candidate_data) as cand_file: 
+        for x in izip(cand_file):
+            x = strip_line(x[0])
+            # read ref files
+            y = [0] * len(ref_files)
+            for idx, ref_file in enumerate(ref_files):
+                y[idx] = strip_line(ref_file.readline())
+                if(tot_y[idx]):
+                    tot_y[idx]+=y[idx].split()
+                else:
+                    tot_y[idx]=y[idx].split()
+            
+            #calculate Pn    
             for i in range(1,5):
-                pn_num, pn_den = calc_pn_value(strip_line(x), [strip_line(y)], i)
+                pn_num, pn_den = calc_pn_value(x, y, i)
                 num[i-1] += pn_num
                 denom[i-1] += pn_den
             
-            tot_x += strip_line(x) 
-            tot_y += strip_line(y)
-        
+            tot_x += x.split()
+            c,r= calc_cr_bp(x.split(), [yi.split() for yi in y])
+            tot_c+=c
+            tot_r+=r 
+            
         # calculate bp for whole file    
-        bp = calc_bp(tot_x, tot_y)
+        bp = calc_bp(tot_c, tot_r)
         
-        ref_file.close()
+        for idx, ref_file in enumerate(ref_files):
+            ref_file.close()
         cand_file.close()
     
     print num, denom, bp
