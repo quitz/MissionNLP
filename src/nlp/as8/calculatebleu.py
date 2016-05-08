@@ -117,7 +117,8 @@ def main_fn():
     score = 0
     for i in range(0,4):
         # TODO handle 0 error
-        score += (0.25 * math.log(num[i] / denom[i]) )
+        if num[i] != 0 and denom[i] != 0:
+            score += (0.25 * math.log(num[i] / denom[i]) )
     
     
     total_score = bp * math.exp(score)
